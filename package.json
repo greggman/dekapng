@@ -29,10 +29,10 @@
     "url": "https://github.com/greggman/dekapng.git"
   },
   "keywords": [
-    "png",
+    "png"
   ],
   "files": [
-    "dist/dekapng.js",
+    "dist/dekapng.js"
   ],
   "author": "Greggman",
   "bugs": {
