@@ -1,0 +1,102 @@
+<body>
+<h1><a href="https://github.com/greggman/dekapng/">dekapng</a></h1>
+<div>generating 8000x8000 png: <span id="progress"></span></div>
+</body>
+<script src="dist/dekapng.js"></script>
+<script>
+const saveData = (function() {
+  const a = document.createElement("a");
+  document.body.appendChild(a);
+  a.style.display = "none";
+  return function saveData(blob, fileName) {
+     const url = window.URL.createObjectURL(blob);
+     a.href = url;
+     a.download = fileName;
+     a.click();
+  };
+}());
+
+const ctx = document.createElement("canvas").getContext("2d");
+
+function drawArea(ctx, width, height, chunkX, chunkY, chunkWidth, chunkHeight) {
+  ctx.canvas.width = chunkWidth;
+  ctx.canvas.height = chunkHeight;
+
+  ctx.save();
+
+  ctx.translate(-chunkX, -chunkY);
+  ctx.translate(width / 2, height / 2);
+
+  const max = Math.sqrt(width * width + height * height) * 1.2;
+  for (let radius = 2; radius < max; radius += 4) {
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2, false);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(200, 100, radius, 0, Math.PI * 2, false);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function wait() {
+  return new Promise((resolve) => {
+    setTimeout(resolve);
+  });
+}
+
+// example of writing an RGBA png
+async function makeBigPng(width, height) {
+  const lineSize = width * 4;
+  const pngRGBAWriter = new dekapng.PNGRGBAWriter(width, height);
+  const line = new Uint8Array(lineSize);
+
+  const chunkWidth  = 1000;
+  const chunkHeight = 100;
+
+  const progress = document.querySelector("#progress");
+  function setProgress(p) {
+    progress.textContent = `${p * 100 | 0}%`;
+  }
+
+  setProgress(0);
+
+  const chunkRowSize = chunkWidth * 4;
+
+  for (let chunkY = 0; chunkY < height; chunkY += chunkHeight) {
+    const rowChunks = [];
+    const localHeight = Math.min(chunkHeight, height - chunkY);
+
+    for (let chunkX = 0; chunkX < width; chunkX += chunkWidth) {
+      const localWidth = Math.min(chunkWidth, width - chunkX);
+
+      drawArea(ctx, width, height, chunkX, chunkY, localWidth, localHeight);
+      rowChunks.push(ctx.getImageData(0, 0, localWidth, localHeight));
+    }
+
+    for (let row = 0; row < localHeight; ++row) {
+      rowChunks.forEach((chunk, ndx) => {
+        const lineOffset = chunkRowSize * ndx;
+        const rowSize = chunk.width * 4;
+        const chunkOffset= rowSize * row;
+        line.set(chunk.data.subarray(chunkOffset, chunkOffset + rowSize), lineOffset);
+      });
+      pngRGBAWriter.addRow(line);
+    }
+
+    setProgress(Math.min(1, (chunkY + chunkHeight) / height));
+    await wait();
+  }
+
+  return pngRGBAWriter.finishAndGetBlob();
+}
+
+const width = 8000;
+const height = 8000;
+makeBigPng(width, height).then((blob) => {
+  const url = URL.createObjectURL(blob);
+  saveData(blob, `generated-${width}x${height}.png`);
+});
+</script>
