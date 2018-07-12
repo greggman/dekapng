@@ -51,7 +51,6 @@ function wait() {
 async function makeBigPng(width, height) {
   const lineSize = width * 4;
   const pngRGBAWriter = new dekapng.PNGRGBAWriter(width, height);
-  const line = new Uint8Array(lineSize);
 
   const chunkWidth  = 1000;
   const chunkHeight = 100;
@@ -78,12 +77,10 @@ async function makeBigPng(width, height) {
 
     for (let row = 0; row < localHeight; ++row) {
       rowChunks.forEach((chunk, ndx) => {
-        const lineOffset = chunkRowSize * ndx;
         const rowSize = chunk.width * 4;
         const chunkOffset= rowSize * row;
-        line.set(chunk.data.subarray(chunkOffset, chunkOffset + rowSize), lineOffset);
+        pngRGBAWriter.addPixels(chunk.data, chunkOffset, chunk.width);
       });
-      pngRGBAWriter.addRow(line);
     }
 
     setProgress(Math.min(1, (chunkY + chunkHeight) / height));

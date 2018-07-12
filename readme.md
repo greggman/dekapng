@@ -21,12 +21,16 @@ do with as you please.
 
 Terse version:
 
-```
-const writer = new dekapng.PNGRGBAWriter(width, height);
-for each row
-  writer.addRow(someUint8ArrayExactlyRowBytesLong)
-const pngBlob = writer.finishAndGetBlob();
-```
+    const writer = new dekapng.PNGRGBAWriter(width, height);
+    for each row
+      writer.addRow(someUint8ArrayExactlyRowBytesLong)
+    const pngBlob = writer.finishAndGetBlob();
+
+You can also use `writer.addPixels` with
+
+    const byteOffset = ???
+    const numPixels = ???
+    writer.addPixels(someUint8Array, byteOffset, numPixels);
 
 Actual example:
 
