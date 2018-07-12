@@ -2,6 +2,8 @@
 
 A library to make giant PNGs in the client
 
+[Example](https://greggman.github.io/dekapng/)
+
 ## What?
 
 I wanted to be able to create an 8000x8000 or 16000x16000 PNG client side.
