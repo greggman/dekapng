@@ -1,5 +1,5 @@
 import { ArrayBufferWalker } from '../util/arraybuffer-walker';
-import { calculateZlibbedLength, ZlibWriter, readZlib } from '../util/zlib';
+import { calculateZlibbedLength, ZlibWriter } from '../util/zlib';
 
 
 /**

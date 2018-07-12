@@ -1,6 +1,5 @@
 import { ArrayBufferWalker } from './arraybuffer-walker';
 import { adler32_buf } from './adler';
-import { DataCallback } from './data-callback';
 
 export const ZLIB_WINDOW_SIZE = 1024 * 32; // 32KB
 export const BLOCK_SIZE = 65535;
@@ -117,44 +116,3 @@ export class ZlibWriter {
     }
 }
 
-export type ZlibReadCallback = (array: Uint8Array, readOffset: number, dataOffset: number, length: number) => void;
-
-
-/**
- * Utility function to parse out a Zlib-encoded block (at a compression level of 0 only). Will
- * skip over Zlib headers and block markers, and call the dataCallback repeatedly when actual
- * data is available.
- * 
- * @export
- * @param {ArrayBufferWalker} walker 
- * @param {ZlibReadCallback} dataCallback 
- */
-export function readZlib(walker: ArrayBufferWalker, dataCallback: ZlibReadCallback) {
-
-    // Disregard Zlib header
-    walker.skip(2);
-
-    let bfinal = false;
-    let dataOffset = 0;
-
-    while (bfinal === false) {
-        // Start of first block
-        bfinal = walker.readUint8() === 1;
-
-        let blockLength = walker.readUint16(true);
-        // console.log(`zlib block: ${blockLength} bytes, final: ${bfinal}`)
-        // skip nlen
-        walker.skip(2);
-
-        // data might change during this time, so we recalc the adler
-        walker.startAdler();
-        dataCallback(walker.array, walker.offset, dataOffset, blockLength);
-
-        walker.offset += blockLength;
-        dataOffset += blockLength;
-        walker.pauseAdler();
-    }
-
-    walker.writeAdler();
-
-}

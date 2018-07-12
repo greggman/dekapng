@@ -1,7 +1,9 @@
 {
-  "name": "png-pong",
+  "name": "dekapng",
   "version": "1.0.0",
-  "main": "lib/src/index.js",
+  "main": "dist/dekapng.js",
+  "description": "Library to make giant PNGs in browser",
+  "module": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "license": "MIT",
   "devDependencies": {
@@ -22,7 +24,23 @@
     "webpack": "^2.4.1",
     "webpack-dev-server": "^2.4.5"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/greggman/dekapng.git"
+  },
+  "keywords": [
+    "png",
+  ],
+  "files": [
+    "dist/dekapng.js",
+  ],
+  "author": "Greggman",
+  "bugs": {
+    "url": "https://github.com/greggman/dekapng/issues"
+  },
+  "homepage": "https://github.com/greggman/dekapng",
   "scripts": {
+    "build": "webpack",
     "tests-node": "mocha-typescript-watch -o mocha.opts",
     "demo": "webpack-dev-server './demo/demo.ts' --module-bind ts=ts-loader --output-filename test.js --plugin html-webpack-plugin --resolve-extensions '.js,.ts,.json' --no-inline --devtool source-map",
     "generate-docs": "typedoc --out docs --mode file --excludeExternals --excludePrivate --exclude 'test/**' ./src/index.ts"
