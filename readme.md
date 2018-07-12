@@ -1,6 +1,6 @@
 # dekapng
 
-A library to make giant PNGs in the client
+A library to make giant PNGs in the browser.
 
 [Example](https://greggman.github.io/dekapng/)
 
@@ -82,15 +82,21 @@ const saveData = (function() {
 }
 ```
 
-## Running tests/demos
+## Running tests/dev
 
-To spin up a server showing you the demo page at demo/demo.ts just run:
+Clone the repo, cd into it and `npm install`.
+
+To spin up a server showing you a small demo page at demo/demo.ts just run:
 
     npm run demo
 
 And go to http://localhost:8080. To run the test suite in Node, run
 
     npm run tests-node
+
+To build
+
+    npm run build
 
 ## Credits
 
