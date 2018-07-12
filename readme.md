@@ -90,4 +90,9 @@ And go to http://localhost:8080. To run the test suite in Node, run
 
     npm run tests-node
 
+## Credits
+
+This code is heavily based on [`png-pong`](https://github.com/gdnmobilelab/png-pong)
+but everything not related to writing a 32bit png has been striped out.
+
 
