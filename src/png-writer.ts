@@ -20,6 +20,8 @@ export class PNGRGBAWriter {
   private walker: BlobWriter;
   private zlibWriter: ZlibWriter;
   private rowsLeft: number;
+  private xOffset: number = 0;
+  private width: number;
 
   constructor(width: number, height: number) {
     const walker = new BlobWriter();
@@ -48,20 +50,35 @@ export class PNGRGBAWriter {
     this.walker = walker;
     this.zlibWriter = zlibWriter;
     this.rowsLeft = height;
+    this.width = width;
   }
 
-  addRow(rowData: Uint8Array) {
+  addPixels(data: Uint8Array, byteOffset: number, numPixels: number) {
     if (!this.rowsLeft) {
       throw new Error('too many rows');
     }
-    --this.rowsLeft;
 
-    // Write our row filter byte
-    this.zlibWriter.writeUint8(0);
+    for(let i = 0; i < numPixels; ++i) {
+      if (this.xOffset === 0) {
+        // Write our row filter byte
+        this.zlibWriter.writeUint8(0);
+      }
+      const offset = byteOffset + i * 4;
+      this.zlibWriter.writeUint8(data[offset + 0]);
+      this.zlibWriter.writeUint8(data[offset + 1]);
+      this.zlibWriter.writeUint8(data[offset + 2]);
+      this.zlibWriter.writeUint8(data[offset + 3]);
 
-    rowData.forEach((data) => {
-      this.zlibWriter.writeUint8(data);
-    });
+      ++this.xOffset;
+      if (this.xOffset === this.width) {
+        this.xOffset = 0;
+        --this.rowsLeft;
+      }
+    }
+  }
+
+  addRow(rowData: Uint8Array) {
+    this.addPixels(rowData, 0, rowData.length / 4);
   }
 
   finishAndGetBlob() {
