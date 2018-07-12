@@ -234,6 +234,7 @@ var zlib_1 = __webpack_require__(9);
  */
 var PNGRGBAWriter = /** @class */ (function () {
     function PNGRGBAWriter(width, height) {
+        this.xOffset = 0;
         var walker = new blob_writer_1.BlobWriter();
         pre_header_1.writePreheader(walker);
         ihdr_1.writeIHDR(walker, {
@@ -255,18 +256,31 @@ var PNGRGBAWriter = /** @class */ (function () {
         this.walker = walker;
         this.zlibWriter = zlibWriter;
         this.rowsLeft = height;
+        this.width = width;
     }
-    PNGRGBAWriter.prototype.addRow = function (rowData) {
-        var _this = this;
+    PNGRGBAWriter.prototype.addPixels = function (data, byteOffset, numPixels) {
         if (!this.rowsLeft) {
             throw new Error('too many rows');
         }
-        --this.rowsLeft;
-        // Write our row filter byte
-        this.zlibWriter.writeUint8(0);
-        rowData.forEach(function (data) {
-            _this.zlibWriter.writeUint8(data);
-        });
+        for (var i = 0; i < numPixels; ++i) {
+            if (this.xOffset === 0) {
+                // Write our row filter byte
+                this.zlibWriter.writeUint8(0);
+            }
+            var offset = byteOffset + i * 4;
+            this.zlibWriter.writeUint8(data[offset + 0]);
+            this.zlibWriter.writeUint8(data[offset + 1]);
+            this.zlibWriter.writeUint8(data[offset + 2]);
+            this.zlibWriter.writeUint8(data[offset + 3]);
+            ++this.xOffset;
+            if (this.xOffset === this.width) {
+                this.xOffset = 0;
+                --this.rowsLeft;
+            }
+        }
+    };
+    PNGRGBAWriter.prototype.addRow = function (rowData) {
+        this.addPixels(rowData, 0, rowData.length / 4);
     };
     PNGRGBAWriter.prototype.finishAndGetBlob = function () {
         if (this.rowsLeft) {
