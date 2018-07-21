@@ -1,8 +1,182 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>dekapng : make big PNGs in browser</title>
+  <style>
+  body {
+      margin: 0;
+      background: darkred;
+      color: white;
+      font-family: monospace;
+  }
+  .title {
+      width: 100vw;
+      height: 50vh;
+      font-family: sans-serif;
+      font-weight: bold;
+      font-size: 30vh;
+      overflow: hidden;
+      background: red;
+      position: relative;
+  }
+  h1 {
+      position: absolute;
+      left: -20px;
+      bottom: -60px;
+      margin: 0;
+  }
+  .ui {
+      z-index: 2;
+  }
+  .radio {
+      display: flex;
+      justify-content: start;
+  }
+  input, label, button, #info {
+      font-size: large;
+  }
+  input {
+    background: red;
+    border: none;
+  }
+  button {
+      margin: .5em;
+      padding: .5em;
+      background: red;
+      border: none;
+      border-bottom: 5px solid #A00;
+  }
+  .ui>div {
+      max-width: 100vw;
+  }
+  .ui>div:nth-child(even) {
+      background: #700;
+  }
+  .ui>div>div, .radio>div {
+      padding: .5em;
+      gmargin: .5em;
+      display: inline-block;
+  }
+  .radio {
+    display: flex;
+    flex-direction: row;
+  }
+  #info {
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 2;
+  }
+  #info>div {
+      background: rgba(0,0,0,0.9);
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+  }
+  #info>div>div {
+      background: red;
+      padding: 1em;
+      color: white;
+      font-family: monospace;
+  }
+  </style>
+</head>
 <body>
-<h1><a href="https://github.com/greggman/dekapng/">dekapng</a></h1>
-<div>generating 8000x8000 png: <span id="progress"></span></div>
+<div class="title">
+  <h1>dekapng</h1>
+</div>
+<form class="ui" id="generate">
+  <div>
+    <div><input type="number" value="8000" min="1" max="32767" name="width" ><label for="width"> width</label  ></div>
+  </div>
+  <div>
+    <div><input type="number" value="8000" min="1" max="32767" name="height"><label for="height"> height</label></div>
+  </div>
+  <div class="radio">
+    <div><input type="radio" value="2d"       id="t1" name="type"        ><label for="t1">2d</label>   </div>
+    <div><input type="radio" value="three.js" id="t2" name="type" checked><label for="t2">three.js</label></div>
+  </div>
+  <div>
+    <button>Generate</button>
+  </div>
+</form>
+<div id="info" style="display: none;">
+  <div>
+    <div>generating <span id="size"></span>: <span id="progress"></span></div>
+  </div>
+</div>
+<style>
+#forkongithub a {
+    background: #000;
+    color: #fff;
+    text-decoration: none;
+    font-family: arial,sans-serif;
+    text-align: center;
+    font-weight: bold;
+    padding: 5px 40px;
+    font-size: 0.9rem;
+    line-height: 2rem;
+    position: relative;
+    transition: 0.5s;
+    display: block;
+    width: 300px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translateX(150px) rotate(45deg) translate(10px,70px);
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.8);
+    pointer-events: auto;
+}
+#forkongithub a:hover {
+    background: #c11;
+    color: #fff;
+}
+#forkongithub a::before,#forkongithub a::after {
+    content: "";
+    width: 100%;
+    display: block;
+    position: absolute;
+    top: 1px;
+    left: 0;
+    height: 1px;
+    background: #fff;
+}
+#forkongithub a::after {
+    bottom: 1px;
+    top: auto;
+}
+
+#forkongithub{
+    z-index: 9999;
+    /* needed for firefox */
+    overflow: hidden;
+    width: 300px;
+    height: 300px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    pointer-events: none;
+}}
+@media (max-width: 900px) {
+    #forkongithub a{
+        line-height: 1.2rem;
+    }
+}
+@media (max-width: 410px) {
+    #forkongithub a{
+        font-size: 0.7rem;
+        transform: translateX(150px) rotate(45deg) translate(20px,40px);
+    }
+}
+
+</style>
+<div id="forkongithub"><a href="https://github.com/greggman/dekapng">Fork me on GitHub</a></div>
 </body>
 <script src="dist/dekapng.js"></script>
+<script src="3rdparty/three.min.js"></script>
 <script>
 const saveData = (function() {
   const a = document.createElement("a");
@@ -16,39 +190,116 @@ const saveData = (function() {
   };
 }());
 
-const ctx = document.createElement("canvas").getContext("2d");
-
-function drawArea(ctx, width, height, chunkX, chunkY, chunkWidth, chunkHeight) {
-  ctx.canvas.width = chunkWidth;
-  ctx.canvas.height = chunkHeight;
-
-  ctx.save();
-
-  ctx.translate(-chunkX, -chunkY);
-  ctx.translate(width / 2, height / 2);
-
-  const max = Math.sqrt(width * width + height * height) * 1.2;
-  for (let radius = 2; radius < max; radius += 4) {
-    ctx.beginPath();
-    ctx.arc(0, 0, radius, 0, Math.PI * 2, false);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(200, 100, radius, 0, Math.PI * 2, false);
-    ctx.stroke();
-  }
-
-  ctx.restore();
-}
-
 function wait() {
   return new Promise((resolve) => {
     setTimeout(resolve);
   });
 }
 
+class Renderer2D {
+  constructor() {
+    this.ctx = document.createElement("canvas").getContext("2d");
+  }
+  drawArea(width, height, chunkX, chunkY, chunkWidth, chunkHeight) {
+    const ctx = this.ctx;
+
+    ctx.canvas.width = chunkWidth;
+    ctx.canvas.height = chunkHeight;
+
+    ctx.save();
+
+    ctx.translate(-chunkX, -chunkY);
+    ctx.translate(width / 2, height / 2);
+
+    const max = Math.sqrt(width * width + height * height) * 1.2;
+    for (let radius = 2; radius < max; radius += 4) {
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2, false);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(200, 100, radius, 0, Math.PI * 2, false);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    return ctx.getImageData(0, 0, chunkWidth, chunkHeight);
+  }
+}
+
+class Renderer3D {
+  constructor() {
+    const camera = new THREE.PerspectiveCamera( 70, 1, 1, 10000 );
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color( 0xf0f0f0 );
+    const light = new THREE.DirectionalLight( 0xffffff, 1 );
+    light.position.set( 1, 1, 1 ).normalize();
+    scene.add( light );
+    const geometry = new THREE.BoxBufferGeometry( 20, 20, 20 );
+    for ( let i = 0; i < 2000; i ++ ) {
+      var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
+      object.position.x = Math.random() * 800 - 400;
+      object.position.y = Math.random() * 800 - 400;
+      object.position.z = Math.random() * 800 - 400;
+      object.rotation.x = Math.random() * 2 * Math.PI;
+      object.rotation.y = Math.random() * 2 * Math.PI;
+      object.rotation.z = Math.random() * 2 * Math.PI;
+      object.scale.x = Math.random() + 0.5;
+      object.scale.y = Math.random() + 0.5;
+      object.scale.z = Math.random() + 0.5;
+      scene.add( object );
+    }
+    const renderer = new THREE.WebGLRenderer();
+
+    this.camera = camera;
+    this.scene = scene;
+    this.renderer = renderer;
+  }
+  drawArea(width, height, chunkX, chunkY, chunkWidth, chunkHeight) {
+    const { renderer, camera, scene } = this;
+
+    renderer.setSize( chunkWidth, chunkHeight );
+
+    camera.aspect = chunkWidth / chunkHeight;
+    camera.setViewOffset( width, height, chunkX, chunkY, chunkWidth, chunkHeight );
+    camera.updateProjectionMatrix();
+
+    const radius = 100;
+    const theta = 45;
+
+    camera.position.x = radius * Math.sin( THREE.Math.degToRad( theta ) );
+    camera.position.y = radius * Math.sin( THREE.Math.degToRad( theta ) );
+    camera.position.z = radius * Math.cos( THREE.Math.degToRad( theta ) );
+    camera.lookAt( scene.position );
+    camera.updateMatrixWorld();
+    renderer.render( scene, camera );
+
+    const data = new Uint8Array(chunkWidth * chunkHeight * 4);
+    const gl = renderer.context;
+    gl.readPixels(0, 0, chunkWidth, chunkHeight, gl.RGBA, gl.UNSIGNED_BYTE, data);
+
+    // swap lines (should probably just fix code in makeBigPng to read backward
+    const lineSize = chunkWidth * 4;
+    const line = new Uint8Array(lineSize);
+    const numLines = chunkHeight / 2 | 0;
+    for (let i = 0; i < numLines; ++i) {
+      const topOffset = lineSize * i;
+      const bottomOffset = lineSize * (chunkHeight - i - 1);
+      line.set(data.slice(topOffset, topOffset + lineSize), 0);
+      data.set(data.slice(bottomOffset, bottomOffset + lineSize), topOffset);
+      data.set(line, bottomOffset);
+    }
+    return {
+      width: chunkWidth,
+      height: chunkHeight,
+      data: data,
+    };
+  }
+}
+
 // example of writing an RGBA png
-async function makeBigPng(width, height) {
+async function makeBigPng(renderer, width, height) {
   const lineSize = width * 4;
   const pngRGBAWriter = new dekapng.PNGRGBAWriter(width, height);
 
@@ -71,8 +322,8 @@ async function makeBigPng(width, height) {
     for (let chunkX = 0; chunkX < width; chunkX += chunkWidth) {
       const localWidth = Math.min(chunkWidth, width - chunkX);
 
-      drawArea(ctx, width, height, chunkX, chunkY, localWidth, localHeight);
-      rowChunks.push(ctx.getImageData(0, 0, localWidth, localHeight));
+      const data = renderer.drawArea(width, height, chunkX, chunkY, localWidth, localHeight);
+      rowChunks.push(data);
     }
 
     for (let row = 0; row < localHeight; ++row) {
@@ -90,10 +341,36 @@ async function makeBigPng(width, height) {
   return pngRGBAWriter.finishAndGetBlob();
 }
 
-const width = 8000;
-const height = 8000;
-makeBigPng(width, height).then((blob) => {
-  const url = URL.createObjectURL(blob);
-  saveData(blob, `generated-${width}x${height}.png`);
+const sizeElem = document.querySelector('#size');
+const formElem = document.querySelector('#generate');
+const infoElem = document.querySelector('#info');
+
+const renderer2D = new Renderer2D();
+const renderer3D = new Renderer3D();
+
+formElem.addEventListener('submit', (e) => {
+
+  const form = new FormData(formElem);
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  formElem.disabled = true;
+  infoElem.style.display = '';
+
+  const width = parseInt(form.get('width'));
+  const height = parseInt(form.get('height'));
+  sizeElem.textContent = `${width}x${height}`;
+
+  const renderer = form.get('type') === 'three.js' ? renderer3D : renderer2D;
+
+  makeBigPng(renderer, width, height).then((blob) => {
+    infoElem.style.display = 'none';
+    formElem.disabled = false;
+    const url = URL.createObjectURL(blob);
+    saveData(blob, `generated-${width}x${height}.png`);
+  });
 });
 </script>
+</html>
+
