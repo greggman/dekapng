@@ -127,7 +127,7 @@ describe("Bit Operations", () => {
         let reader = new ArrayBufferWalker(buff);
         writer.startAdler();
         writer.writeUint32(3000);
-        writer.writeAdler();
+        writer.writeAdler(writer);
 
         expect(writer.offset).toEqual(8);
 

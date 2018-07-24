@@ -112,7 +112,7 @@ export class ZlibWriter {
     }
 
     end() {
-        this.walker.writeAdler();
+        this.walker.writeAdler(this.walker);
     }
 }
 

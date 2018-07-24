@@ -208,13 +208,13 @@ export class ArrayBufferWalker {
      * 
      * @memberof ArrayBufferWalker
      */
-    writeAdler() {
+    writeAdler(walker: ArrayBufferWalker) {
         if (this.adlerStartOffset === undefined && this.savedAdlerValue === undefined) {
             throw new Error("CRC has not been started, cannot write");
         }
 
         if (this.adlerStartOffset === undefined) {
-            this.writeUint32(this.savedAdlerValue);
+            walker.writeUint32(this.savedAdlerValue);
             this.savedAdlerValue = undefined;
             return;
         }
@@ -222,7 +222,7 @@ export class ArrayBufferWalker {
         let adler = adler32_buf(this.array, this.adlerStartOffset, this.offset - this.adlerStartOffset, this.savedAdlerValue);
 
         this.adlerStartOffset = undefined;
-        this.writeUint32(adler);
+        walker.writeUint32(adler);
 
     }
 }

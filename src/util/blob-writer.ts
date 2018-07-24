@@ -70,13 +70,14 @@ export class BlobWriter extends ArrayBufferWalker {
     this.adlerOffset = undefined;
   }
 
-  writeAdler() {
+  // total hack!
+  writeAdler(walker: ArrayBufferWalker) {
     if (this.adlerOffset === undefined && this.adler === undefined) {
         throw new Error("Adler has not been started, cannot pause");
     }
 
     if (this.adlerOffset === undefined) {
-        this.writeUint32(this.adler);
+        walker.writeUint32(this.adler);
         this.adler = undefined;
         return;
     }
@@ -85,7 +86,7 @@ export class BlobWriter extends ArrayBufferWalker {
 
     this.adlerOffset = undefined;
     this.adler = undefined;
-    this.writeUint32(adler);
+    walker.writeUint32(adler);
   }
 
   flushIfNoSpace(spaceNeeded) {
