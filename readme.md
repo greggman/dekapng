@@ -86,15 +86,6 @@ const saveData = (function() {
 }
 ```
 
-## Limits
-
-A single IDAT chunk in a PNG can only be 2^^31-1 in size. There's some
-overhead related to compression (even though it's uncompressed) so
-at the moment the max size is 2147319796 bytes.
-
-In other words 23170x23168 for example. You should be able to make
-64000x1000 for example as it's less then 2147319769
-
 ## Running tests/dev
 
 Clone the repo, cd into it and `npm install`.
@@ -110,6 +101,35 @@ And go to http://localhost:8080. To run the test suite in Node, run
 To build
 
     npm run build
+
+## Limits
+
+Unknown. It used to have a limit of just under 2147319796 bytes
+as that is the limit you can store in a single IDAT zlib uncompressed
+chunk. As a square that was about 23170x23168 pixels. But I've since
+removed that limit so I'm guessing the limit is whatever the browser
+complains about. PNG's techincal limit appears to be 2^32-1 x 2^32-1.
+
+## Cleanup
+
+The code is a mess. Because I started with [png-pong]((https://github.com/gdnmobilelab/png-pong)
+and I wanted the change the code as little as possible I hacked in a class
+`BlobWriter` that was a substitute for png-pong's `ArrayBufferWalker`.
+It did the job but it's not a correct fit and the code should be refactored.
+It got worse when adding support for really large PNGs (size > 2**31-1)
+when I added `IDATChunker` which is yet another kind of override of `ArrayBufferWriter`
+that really doesn't fit and I had to hack some stuff in particularly related
+to adler stuff.
+
+The code seems to be working but if there is one place I'd fix I'd make zlib take
+an `IHDRChunker` direclty probably. I also might figure out a way to move
+the adler code to another class? Not sure.
+
+## Future
+
+It probably would not be that hard to add real compression using some zlib
+library. The library just have to be adapted to handle a stream
+which I believe zlib compression is condusive too.
 
 ## Credits
 
