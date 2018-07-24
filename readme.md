@@ -86,6 +86,15 @@ const saveData = (function() {
 }
 ```
 
+## Limits
+
+A single IDAT chunk in a PNG can only be 2^^31-1 in size. There's some
+overhead related to compression (even though it's uncompressed) so
+at the moment the max size is 2147319796 bytes.
+
+In other words 23170x23168 for example. You should be able to make
+64000x1000 for example as it's less then 2147319769
+
 ## Running tests/dev
 
 Clone the repo, cd into it and `npm install`.
