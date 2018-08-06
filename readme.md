@@ -122,7 +122,7 @@ that really doesn't fit and I had to hack some stuff in particularly related
 to adler stuff.
 
 The code seems to be working but if there is one place I'd fix I'd make zlib take
-an `IHDRChunker` direclty probably. I also might figure out a way to move
+an `IDATChunker` direclty probably. I also might figure out a way to move
 the adler code to another class? Not sure.
 
 ## Future
@@ -130,6 +130,27 @@ the adler code to another class? Not sure.
 It probably would not be that hard to add real compression using some zlib
 library. The library just have to be adapted to handle a stream
 which I believe zlib compression is condusive too.
+
+There's also the issue right now that code that writes the `IDAT` chunks
+needs to know the size of the chunk it's going to write before it writes
+it. Given that at the end we are concatinating an array of Blobs we could just
+insert a blob with only the length at the right place in the array of blobs
+so that we don't have to know the length in advance.
+
+In other words as the code its now it's streaming to an arraybuffer. When the arraybuffer
+is full it saves the arraybuffer to a blob and adds the blob to the end of an array of blobs.
+
+   [largeblob, largeblob, largeblob]
+
+We could change the chunk writing code to return an array of blobs that would be something like
+
+   [4byteLengthBlob, dataBlob, dataBlob, dataBlob]
+
+That `4byteLengthBlob` would get inserted when ending the chunk. This way we wouldn't
+need to know the length.
+
+We'd then have an array of all blobs making the file (like we do now) that we can create
+a new blob from that is the concatination of all blobs.
 
 ## Credits
 
