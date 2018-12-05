@@ -147,7 +147,8 @@ We could change the chunk writing code to return an array of blobs that would be
    [4byteLengthBlob, dataBlob, dataBlob, dataBlob]
 
 That `4byteLengthBlob` would get inserted when ending the chunk. This way we wouldn't
-need to know the length.
+need to know the length before writing. We'd know the length after writing and then
+insert the `4byteLengthBlob` with the correct length.
 
 We'd then have an array of all blobs making the file (like we do now) that we can create
 a new blob from that is the concatination of all blobs.
