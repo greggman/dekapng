@@ -112,7 +112,7 @@ complains about. PNG's techincal limit appears to be 2^32-1 x 2^32-1.
 
 ## Cleanup
 
-The code is a mess. Because I started with [png-pong]((https://github.com/gdnmobilelab/png-pong)
+The code is a mess. Because I started with [png-pong](https://github.com/gdnmobilelab/png-pong)
 and I wanted the change the code as little as possible I hacked in a class
 `BlobWriter` that was a substitute for png-pong's `ArrayBufferWalker`.
 It did the job but it's not a correct fit and the code should be refactored.
