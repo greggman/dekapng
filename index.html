@@ -36,7 +36,7 @@
   input, label, button, #info {
       font-size: large;
   }
-  input {
+  input, textarea {
     background: red;
     border: none;
   }
@@ -58,9 +58,19 @@
       gmargin: .5em;
       display: inline-block;
   }
+  #settings>div {
+    width: 100%;
+  }
   .radio {
     display: flex;
     flex-direction: row;
+  }
+  table {
+    width: 100%;
+  }
+  table textarea {
+    width: 100%;
+    height: 6em;
   }
   #info {
       position: absolute;
@@ -82,6 +92,12 @@
       color: white;
       font-family: monospace;
   }
+  .error {
+    height: 10em;
+    overflow: auto;
+    color: red;
+    background: #300;
+  }
   </style>
 </head>
 <body>
@@ -96,9 +112,8 @@
     <div><input type="number" value="8000" min="1" max="32767" name="height"><label for="height"> height</label></div>
   </div>
   <div class="radio">
-    <div><input type="radio" value="2d"       id="t1" name="type"        ><label for="t1">2d</label>   </div>
-    <div><input type="radio" value="three.js" id="t2" name="type" checked><label for="t2">three.js</label></div>
   </div>
+  <div id="settings"></div>
   <div>
     <button>Generate</button>
   </div>
@@ -177,200 +192,6 @@
 </body>
 <script src="dist/dekapng.js"></script>
 <script src="3rdparty/three.min.js"></script>
-<script>
-const saveData = (function() {
-  const a = document.createElement("a");
-  document.body.appendChild(a);
-  a.style.display = "none";
-  return function saveData(blob, fileName) {
-     const url = window.URL.createObjectURL(blob);
-     a.href = url;
-     a.download = fileName;
-     a.click();
-  };
-}());
-
-function wait() {
-  return new Promise((resolve) => {
-    setTimeout(resolve);
-  });
-}
-
-class Renderer2D {
-  constructor() {
-    this.ctx = document.createElement("canvas").getContext("2d");
-  }
-  drawArea(width, height, chunkX, chunkY, chunkWidth, chunkHeight) {
-    const ctx = this.ctx;
-
-    ctx.canvas.width = chunkWidth;
-    ctx.canvas.height = chunkHeight;
-
-    ctx.save();
-
-    ctx.translate(-chunkX, -chunkY);
-    ctx.translate(width / 2, height / 2);
-
-    const max = Math.sqrt(width * width + height * height) * 1.2;
-    for (let radius = 2; radius < max; radius += 4) {
-      ctx.beginPath();
-      ctx.arc(0, 0, radius, 0, Math.PI * 2, false);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(200, 100, radius, 0, Math.PI * 2, false);
-      ctx.stroke();
-    }
-
-    ctx.restore();
-
-    return ctx.getImageData(0, 0, chunkWidth, chunkHeight);
-  }
-}
-
-class Renderer3D {
-  constructor() {
-    const camera = new THREE.PerspectiveCamera( 70, 1, 1, 10000 );
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color( 0xf0f0f0 );
-    const light = new THREE.DirectionalLight( 0xffffff, 1 );
-    light.position.set( 1, 1, 1 ).normalize();
-    scene.add( light );
-    const geometry = new THREE.BoxBufferGeometry( 20, 20, 20 );
-    for ( let i = 0; i < 2000; i ++ ) {
-      var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
-      object.position.x = Math.random() * 800 - 400;
-      object.position.y = Math.random() * 800 - 400;
-      object.position.z = Math.random() * 800 - 400;
-      object.rotation.x = Math.random() * 2 * Math.PI;
-      object.rotation.y = Math.random() * 2 * Math.PI;
-      object.rotation.z = Math.random() * 2 * Math.PI;
-      object.scale.x = Math.random() + 0.5;
-      object.scale.y = Math.random() + 0.5;
-      object.scale.z = Math.random() + 0.5;
-      scene.add( object );
-    }
-    const renderer = new THREE.WebGLRenderer();
-
-    this.camera = camera;
-    this.scene = scene;
-    this.renderer = renderer;
-  }
-  drawArea(width, height, chunkX, chunkY, chunkWidth, chunkHeight) {
-    const { renderer, camera, scene } = this;
-
-    renderer.setSize( chunkWidth, chunkHeight );
-
-    camera.aspect = chunkWidth / chunkHeight;
-    camera.setViewOffset( width, height, chunkX, chunkY, chunkWidth, chunkHeight );
-    camera.updateProjectionMatrix();
-
-    const radius = 100;
-    const theta = 45;
-
-    camera.position.x = radius * Math.sin( THREE.Math.degToRad( theta ) );
-    camera.position.y = radius * Math.sin( THREE.Math.degToRad( theta ) );
-    camera.position.z = radius * Math.cos( THREE.Math.degToRad( theta ) );
-    camera.lookAt( scene.position );
-    camera.updateMatrixWorld();
-    renderer.render( scene, camera );
-
-    const data = new Uint8Array(chunkWidth * chunkHeight * 4);
-    const gl = renderer.context;
-    gl.readPixels(0, 0, chunkWidth, chunkHeight, gl.RGBA, gl.UNSIGNED_BYTE, data);
-
-    // swap lines (should probably just fix code in makeBigPng to read backward
-    const lineSize = chunkWidth * 4;
-    const line = new Uint8Array(lineSize);
-    const numLines = chunkHeight / 2 | 0;
-    for (let i = 0; i < numLines; ++i) {
-      const topOffset = lineSize * i;
-      const bottomOffset = lineSize * (chunkHeight - i - 1);
-      line.set(data.slice(topOffset, topOffset + lineSize), 0);
-      data.set(data.slice(bottomOffset, bottomOffset + lineSize), topOffset);
-      data.set(line, bottomOffset);
-    }
-    return {
-      width: chunkWidth,
-      height: chunkHeight,
-      data: data,
-    };
-  }
-}
-
-// example of writing an RGBA png
-async function makeBigPng(renderer, width, height) {
-  const lineSize = width * 4;
-  const pngRGBAWriter = new dekapng.PNGRGBAWriter(width, height);
-
-  const chunkWidth  = 1000;
-  const chunkHeight = 100;
-
-  const progress = document.querySelector("#progress");
-  function setProgress(p) {
-    progress.textContent = `${p * 100 | 0}%`;
-  }
-
-  setProgress(0);
-
-  const chunkRowSize = chunkWidth * 4;
-
-  for (let chunkY = 0; chunkY < height; chunkY += chunkHeight) {
-    const rowChunks = [];
-    const localHeight = Math.min(chunkHeight, height - chunkY);
-
-    for (let chunkX = 0; chunkX < width; chunkX += chunkWidth) {
-      const localWidth = Math.min(chunkWidth, width - chunkX);
-
-      const data = renderer.drawArea(width, height, chunkX, chunkY, localWidth, localHeight);
-      rowChunks.push(data);
-    }
-
-    for (let row = 0; row < localHeight; ++row) {
-      rowChunks.forEach((chunk, ndx) => {
-        const rowSize = chunk.width * 4;
-        const chunkOffset= rowSize * row;
-        pngRGBAWriter.addPixels(chunk.data, chunkOffset, chunk.width);
-      });
-    }
-
-    setProgress(Math.min(1, (chunkY + chunkHeight) / height));
-    await wait();
-  }
-
-  return pngRGBAWriter.finishAndGetBlob();
-}
-
-const sizeElem = document.querySelector('#size');
-const formElem = document.querySelector('#generate');
-const infoElem = document.querySelector('#info');
-
-const renderer2D = new Renderer2D();
-const renderer3D = new Renderer3D();
-
-formElem.addEventListener('submit', (e) => {
-
-  const form = new FormData(formElem);
-
-  e.preventDefault();
-  e.stopPropagation();
-
-  formElem.disabled = true;
-  infoElem.style.display = '';
-
-  const width = parseInt(form.get('width'));
-  const height = parseInt(form.get('height'));
-  sizeElem.textContent = `${width}x${height}`;
-
-  const renderer = form.get('type') === 'three.js' ? renderer3D : renderer2D;
-
-  makeBigPng(renderer, width, height).then((blob) => {
-    infoElem.style.display = 'none';
-    formElem.disabled = false;
-    const url = URL.createObjectURL(blob);
-    saveData(blob, `generated-${width}x${height}.png`);
-  });
-});
-</script>
+<script type="module" src="examples/index.js"></script>
 </html>
 
