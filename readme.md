@@ -153,6 +153,10 @@ insert the `4byteLengthBlob` with the correct length.
 We'd then have an array of all blobs making the file (like we do now) that we can create
 a new blob from that is the concatination of all blobs.
 
+## Other
+
+While dekapng works with three.js it is not three.js specific. If you are using three.js you might consider [THREE.Highres](https://github.com/taseenb/THREE.Highres), a library that's already integrated with three.js
+
 ## Credits
 
 This code is heavily based on [`png-pong`](https://github.com/gdnmobilelab/png-pong)
